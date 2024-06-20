@@ -1,8 +1,12 @@
 #include "hde/hde32.h"
+#include "sdk.h"
 #include "util.h"
 
+#include <algorithm>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <unordered_map>
 
 static bool aborted;
 
@@ -10,13 +14,13 @@ static bool aborted;
  * dump signatures based on logging functions
  */
 void dump_sigs( ) {
+	printf( "[+] dumping signatures...\n" );
+
 	/* open file for writing */
 	std::ofstream file;
 	file.open( "signatures.md" );
 	file << "# Signatures\n"
 						<< std::endl;
-	file << "|Module|Function|Signature|" << std::endl;
-	file << "|---|---|---|" << std::endl;
 
 	/* ==== loop through all modules ==== */
 	size_t count = 0;
@@ -43,6 +47,10 @@ void dump_sigs( ) {
 			continue;
 
 		printf( "[+] %s: 0/%d\r", module.name, addrs.size( ) );
+
+		file << util::str::ssprintf( "## %s", module.name ) << std::endl;
+		file << "|Function|Signature|" << std::endl;
+		file << "|---|---|" << std::endl;
 
 		std::string prev_pattern;
 		size_t distinct = 0;  // number of distinct functions
@@ -120,7 +128,7 @@ void dump_sigs( ) {
 
 			/* finally append to file */
 			if ( !name.empty( ) && !pattern.empty( ) && pattern != prev_pattern ) {
-				file << util::str::ssprintf( "|%s|%s|%s|", module.name, name.c_str( ), pattern.c_str( ) ) << std::endl;
+				file << util::str::ssprintf( "|%s|```%s```|", name.c_str( ), pattern.c_str( ) ) << std::endl;
 
 				++distinct;
 
@@ -138,6 +146,176 @@ void dump_sigs( ) {
 	file.close( );
 
 	printf( "[+] dumped %d signatures to \"signatures.md\".\n", count );
+}
+
+/*
+ * dump netvars from list
+ */
+void dump_netvars( ) {
+	printf( "[+] dumping netvars...\n" );
+
+	/* open file for writing */
+	std::ofstream file;
+	file.open( "netvars.md" );
+	file << "# Netvars\n"
+						<< std::endl;
+
+	const auto client = sdk::get_interface<sdk::i_client>( "client.dll", "VClient016" );
+
+	/* ==== recursively dump all netvars ==== */
+	size_t count = 0;
+
+	struct recv_class {
+		std::string name;
+		std::vector<sdk::recv_prop> props;
+	};
+	std::vector<recv_class> classes;
+
+	std::function<void( const char *, sdk::recv_table *, uint32_t )> recursive_dump;
+	recursive_dump = [ & ]( const char *baseclass, sdk::recv_table *table, uint32_t offset ) {
+		auto cur_class = recv_class( );
+		for ( size_t i = 0; i < table->props_count; ++i ) {
+			const auto prop = &table->props[ i ];
+
+			/* sanity checks */
+			if ( table->props_count < 3 )
+				continue;
+
+			if ( !prop || isdigit( prop->prop_name[ 0 ] ) )
+				continue;
+
+			if ( i == 0 ) {
+				cur_class.name = baseclass;
+				continue;
+			}
+
+			if ( prop->prop_type == sdk::send_prop_type::_data_table && prop->data_table && prop->data_table->table_name[ 0 ] == 'D' )
+				recursive_dump( baseclass, prop->data_table, offset + prop->offset );
+
+			sdk::recv_prop custom_prop = *prop;
+			custom_prop.offset = offset + prop->offset;
+			custom_prop.prop_type = ( sdk::send_prop_type )( custom_prop.prop_type + 1 );
+			cur_class.props.push_back( custom_prop );
+
+			++count;
+		}
+
+		if ( !cur_class.name.empty( ) )
+			classes.push_back( cur_class );
+	};
+
+	/* go through each class and dump */
+	for ( auto client_class = client->get_all_classes( ); client_class; client_class = client_class->next_ptr ) {
+		if ( client_class->recvtable_ptr )
+			recursive_dump( client_class->network_name, client_class->recvtable_ptr, 0 );
+	}
+
+	for ( auto &client_class : classes ) {
+		file << util::str::ssprintf( "## %s", client_class.name.c_str( ) ) << std::endl;
+		file << util::str::ssprintf( "```cpp\nstruct %s {", client_class.name.c_str( ) ) << std::endl;
+
+		/* sort by offset */
+
+		std::sort( client_class.props.begin( ), client_class.props.end( ), []( const sdk::recv_prop &lhs, const sdk::recv_prop &rhs ) {
+			return lhs.offset < rhs.offset;
+		} );
+
+		for ( size_t i = 0; i < client_class.props.size( ); ++i ) {
+			const auto prop = &client_class.props[ i ];
+
+			auto last_prop = sdk::recv_prop( );
+			if ( i > 0 )
+				last_prop = client_class.props[ i - 1 ];
+
+			/* type information */
+			std::vector<std::pair<const char *, size_t>> types {
+				{ "unknown", 0 },
+				{ "int32_t ", 4 },
+				{ "float ", 4 },
+				{ "vec3_t ", 12 },
+				{ "vec2_t ", 8 },
+				{ "char *", 4 },
+				{ "char *", 4 },  // not sure bout this one
+				{ "void *", 4 },  // not sure bout this one
+				{ "int64_t ", 8 } };
+
+			/* add alignment offset */
+			int offset = prop->offset - last_prop.offset - types[ last_prop.prop_type ].second;
+			if ( offset > 0 ) {
+				file << util::str::ssprintf( "	char pad_%04x[%d];  // 0x%04x", prop->offset, offset, last_prop.offset + types[ last_prop.prop_type ].second ) << std::endl;
+			}
+
+			file << util::str::ssprintf( "	%s%s;  // 0x%04x", types[ prop->prop_type ].first, prop->prop_name, prop->offset ) << std::endl;
+		}
+
+		file << "}\n```" << std::endl;
+	}
+
+	file.close( );
+
+	printf( "[+] dumped %d netvars to \"netvars.md\".\n", count );
+}
+
+/*
+ * dump all interfaces
+ */
+void dump_ifaces( ) {
+	printf( "[+] dumping interfaces...\n" );
+
+	/* open file for writing */
+	std::ofstream file;
+	file.open( "interfaces.md" );
+	file << "# Interfaces\n"
+						<< std::endl;
+
+	class interface_reg {
+	public:
+		BYTE createfn[ 4 ];
+		const char *name;
+		interface_reg *next;
+	};
+
+	/* ==== loop through all interfaces from all modules ==== */
+	size_t count = 0;
+	for ( const auto module : util::mem::dump_modules( ) ) {
+		/*
+		 * TODO: find real fix lol
+		 */
+		if ( !strcmp( module.name, "steamclient.dll" ) || !strcmp( module.name, "crashhandler.dll" ) )
+			continue;
+
+		void *fn = GetProcAddress( ( HMODULE ) module.base, "CreateInterface" );
+		if ( fn ) {
+			auto var01 = ( ( uintptr_t ) fn + 0x8 );
+			if ( !var01 ) continue;
+
+			auto var02 = *( unsigned short * ) ( ( uintptr_t ) fn + 0x5 );
+			if ( !var02 ) continue;
+
+			auto var03 = *( unsigned short * ) ( ( uintptr_t ) fn + 0x7 );
+			if ( !var03 ) continue;
+
+			auto var04 = ( uintptr_t ) ( var01 + ( var02 - var03 ) );
+			if ( !var04 ) continue;
+
+			interface_reg *reg = **( interface_reg *** ) ( var04 + 0x6 );
+			if ( !reg ) continue;
+
+			file << util::str::ssprintf( "## %s", module.name ) << std::endl;
+			file << "|Module|Interface|" << std::endl;
+			file << "|---|---|" << std::endl;
+
+			for ( interface_reg *cur = reg; cur; cur = cur->next ) {
+				file << util::str::ssprintf( "|%s|%s|", module.name, cur->name ) << std::endl;
+
+				++count;
+			}
+		}
+	}
+
+	file.close( );
+
+	printf( "[+] dumped %d interfaces to \"interfaces.md\".\n", count );
 }
 
 void main( HMODULE instance ) {
@@ -170,13 +348,17 @@ void main( HMODULE instance ) {
 		dump_sigs( );
 		break;
 	case 2:
+		dump_netvars( );
 		break;
 	case 3:
+		dump_ifaces( );
 		break;
 	}
 
 	/* ==== exit ==== */
 	printf( "[-] exiting in 3 seconds...\n" );
+
+	aborted = true;
 
 	Sleep( 3000 );
 
@@ -191,7 +373,7 @@ void main( HMODULE instance ) {
 }
 
 void exit_thread( ) {
-	while ( true ) {
+	while ( !aborted ) {
 		if ( GetAsyncKeyState( VK_ESCAPE ) ) {
 			aborted = true;
 			break;
