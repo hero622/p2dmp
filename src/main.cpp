@@ -74,16 +74,19 @@ void dump_sigs( ) {
 					name = std::string( *reinterpret_cast<const char **>( p + 0x1 ) );
 			}
 
+			/* remove newlines */
+			name.erase( std::remove( name.begin( ), name.end( ), '\n' ), name.end( ) );
+
 			/* find start of fn to make signature */
 			/*
 			 * TODO: find better way to trace back the start of a function
 			 * with this current one we miss a lot and get some wrong signatures
 			 */
-			while ( !( p[ 0 ] == 0xCC && p[ 1 ] == 0x55 ) ) {
+			while ( *( uint32_t * ) p != 0xEC8B55CC ) {
 				--p;
-				if ( p[ 0 ] == 0xCC && p[ 1 ] == 0x55 ) {
+				if ( *( uint32_t * ) p == 0xEC8B55CC ) {
 					/* create signature */
-					p += 2;
+					++p;
 					for ( size_t j = 0; j < 64; ) {
 						/* disassemble instruction to see if we need to add wildcards */
 						hde32s ins;
@@ -128,7 +131,7 @@ void dump_sigs( ) {
 
 			/* finally append to file */
 			if ( !name.empty( ) && !pattern.empty( ) && pattern != prev_pattern ) {
-				file << util::str::ssprintf( "|%s|```%s```|", name.c_str( ), pattern.c_str( ) ) << std::endl;
+				file << util::str::ssprintf( "|%s|`%s`|", name.c_str( ), pattern.c_str( ) ) << std::endl;
 
 				++distinct;
 
