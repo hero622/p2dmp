@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClInclude Include="hde\hde32.h" />
     <ClInclude Include="hde\table32.h" />
+    <ClInclude Include="sdk.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

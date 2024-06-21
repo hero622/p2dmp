@@ -3,10 +3,24 @@
 #include "util.h"
 
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <set>
 #include <unordered_map>
+
+#pragma warning( disable : 4996 );
+
+#define LOG_TIMESTAMP( )                                                                                                                   \
+	{                                                                                                                                         \
+		time_t now = time( 0 );                                                                                                                  \
+		tm *gmtm = gmtime( &now );                                                                                                               \
+		char buf[ 80 ];                                                                                                                          \
+		strftime( buf, sizeof( buf ), "%d/%m/%Y at %X", gmtm );                                                                                  \
+		file << util::str::ssprintf( "This dump was generated using [p2dmp](https://github.com/hero622/p2dmp) on %s (UTC).", buf ) << std::endl; \
+	}
 
 static bool aborted;
 
@@ -19,8 +33,8 @@ void dump_sigs( ) {
 	/* open file for writing */
 	std::ofstream file;
 	file.open( "signatures.md" );
-	file << "# Signatures\n"
-						<< std::endl;
+	file << "# Signatures" << std::endl;
+	LOG_TIMESTAMP( );
 
 	/* ==== loop through all modules ==== */
 	size_t count = 0;
@@ -160,8 +174,8 @@ void dump_netvars( ) {
 	/* open file for writing */
 	std::ofstream file;
 	file.open( "netvars.md" );
-	file << "# Netvars\n"
-						<< std::endl;
+	file << "# Netvars" << std::endl;
+	LOG_TIMESTAMP( );
 
 	const auto client = sdk::get_interface<sdk::i_client>( "client.dll", "VClient016" );
 
@@ -268,8 +282,8 @@ void dump_ifaces( ) {
 	/* open file for writing */
 	std::ofstream file;
 	file.open( "interfaces.md" );
-	file << "# Interfaces\n"
-						<< std::endl;
+	file << "# Interfaces" << std::endl;
+	LOG_TIMESTAMP( );
 
 	class interface_reg {
 	public:
@@ -284,7 +298,7 @@ void dump_ifaces( ) {
 		/*
 		 * TODO: find real fix lol
 		 */
-		if ( !strcmp( module.name, "steamclient.dll" ) || !strcmp( module.name, "crashhandler.dll" ) )
+		if ( !strcmp( module.name, "steamclient.dll" ) || !strcmp( module.name, "crashhandler.dll" ) || !strcmp( module.name, "vstdlib_s.dll" ) )
 			continue;
 
 		void *fn = GetProcAddress( ( HMODULE ) module.base, "CreateInterface" );
@@ -308,8 +322,13 @@ void dump_ifaces( ) {
 			file << "|Module|Interface|" << std::endl;
 			file << "|---|---|" << std::endl;
 
+			/* filter out unique */
+			std::set<const char *> ifaces;
 			for ( interface_reg *cur = reg; cur; cur = cur->next ) {
-				file << util::str::ssprintf( "|%s|%s|", module.name, cur->name ) << std::endl;
+				ifaces.insert( cur->name );
+			}
+			for ( const auto iface : ifaces ) {
+				file << util::str::ssprintf( "|%s|%s|", module.name, iface ) << std::endl;
 
 				++count;
 			}

@@ -1,5 +1,5 @@
 # Netvars
-
+This dump was generated using [p2dmp](https://github.com/hero622/p2dmp) on 21/06/2024 at 22:00:12 (UTC).
 ## CTestTraceline
 ```cpp
 struct CTestTraceline {
