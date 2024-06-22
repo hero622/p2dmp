@@ -233,9 +233,10 @@ void dump_netvars( ) {
 	};
 	std::vector<recv_class> classes;
 
+	recv_class cur_class;
+
 	std::function<void( const char *, sdk::recv_table *, uint32_t )> recursive_dump;
 	recursive_dump = [ & ]( const char *baseclass, sdk::recv_table *table, uint32_t offset ) {
-		auto cur_class = recv_class( );
 		for ( size_t i = 0; i < table->props_count; ++i ) {
 			const auto prop = &table->props[ i ];
 
@@ -246,8 +247,12 @@ void dump_netvars( ) {
 			if ( !prop || isdigit( prop->prop_name[ 0 ] ) )
 				continue;
 
-			if ( i == 0 ) {
+			if ( i == 0 && baseclass != cur_class.name ) {
+				cur_class = recv_class( );
 				cur_class.name = baseclass;
+				if ( !cur_class.name.empty( ) )
+					classes.push_back( cur_class );
+
 				continue;
 			}
 
@@ -257,13 +262,10 @@ void dump_netvars( ) {
 			sdk::recv_prop custom_prop = *prop;
 			custom_prop.offset = offset + prop->offset;
 			custom_prop.prop_type = ( sdk::send_prop_type )( custom_prop.prop_type + 1 );
-			cur_class.props.push_back( custom_prop );
+			classes.back( ).props.push_back( custom_prop );
 
 			++count;
 		}
-
-		if ( !cur_class.name.empty( ) )
-			classes.push_back( cur_class );
 	};
 
 	/* go through each class and dump */
@@ -277,7 +279,6 @@ void dump_netvars( ) {
 		file << util::str::ssprintf( "```cpp\nstruct %s {", client_class.name.c_str( ) ) << std::endl;
 
 		/* sort by offset */
-
 		std::sort( client_class.props.begin( ), client_class.props.end( ), []( const sdk::recv_prop &lhs, const sdk::recv_prop &rhs ) {
 			return lhs.offset < rhs.offset;
 		} );
@@ -286,8 +287,12 @@ void dump_netvars( ) {
 			const auto prop = &client_class.props[ i ];
 
 			auto last_prop = sdk::recv_prop( );
-			if ( i > 0 )
+			if ( i > 0 ) {
 				last_prop = client_class.props[ i - 1 ];
+
+				if ( prop->offset == last_prop.offset )
+					continue;
+			}
 
 			/* type information */
 			std::pair<const char *, size_t> types[ 9 ] {

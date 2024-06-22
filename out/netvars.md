@@ -1,5 +1,5 @@
 # Netvars
-This dump was generated using [p2dmp](https://github.com/hero622/p2dmp) on 21/06/2024 at 22:00:12 (UTC).
+This dump was generated using [p2dmp](https://github.com/hero622/p2dmp) on 22/06/2024 at 13:09:12 (UTC).
 ## CTestTraceline
 ```cpp
 struct CTestTraceline {
@@ -847,7 +847,6 @@ struct CWeaponPaintGun {
 	void *m_bHasPaint;  // 0x0ec8
 	char pad_0ed0[4];  // 0x0ecc
 	void *m_hPaintStream;  // 0x0ed0
-	int32_t m_hPaintStream;  // 0x0ed0
 	char pad_0ee4[16];  // 0x0ed4
 	void *m_PaintAmmoPerType;  // 0x0ee4
 }
@@ -957,7 +956,21 @@ struct CPropEnergyBall {
 ## CPortal_Player
 ```cpp
 struct CPortal_Player {
-	char pad_1c70[7280];  // 0x0000
+	void *portallocaldata;  // 0x0000
+	char pad_00fc[248];  // 0x0004
+	vec3_t m_vecViewOffset;  // 0x00fc
+	float m_vecViewOffset[1];  // 0x0100
+	float m_vecViewOffset[2];  // 0x0104
+	char pad_012c[36];  // 0x0108
+	vec2_t m_vecOrigin;  // 0x012c
+	float m_vecOrigin[2];  // 0x0134
+	char pad_1c48[6928];  // 0x0138
+	int32_t m_bPitchReorientation;  // 0x1c48
+	char pad_1c58[12];  // 0x1c4c
+	int32_t m_hPortalEnvironment;  // 0x1c58
+	char pad_1c68[12];  // 0x1c5c
+	void *m_PortalLocal;  // 0x1c68
+	int32_t m_bShowingViewFinder;  // 0x1c6c
 	float m_flAirControlSupressionTime;  // 0x1c70
 	void *m_nLocatorEntityIndices;  // 0x1c74
 	char pad_1cb4[60];  // 0x1c78
@@ -996,57 +1009,7 @@ struct CPortal_Player {
 	int32_t m_bZoomedIn;  // 0x1df8
 	float m_fBouncedTime;  // 0x1dfc
 	int32_t m_bPreventedCrouchJumpThisFrame;  // 0x1e00
-}
-```
-## CPortal_Player
-```cpp
-struct CPortal_Player {
-	void *m_EntityPortalledNetworkMessages;  // 0x0000
-	char pad_00fc[248];  // 0x0004
-	vec3_t m_vecViewOffset;  // 0x00fc
-	char pad_0134[44];  // 0x0108
-	float m_vecOrigin[2];  // 0x0134
-	char pad_21ec[8372];  // 0x0138
-	vec3_t m_vecCarriedObjectAngles;  // 0x21ec
-	char pad_2200[8];  // 0x21f8
-	vec3_t m_vecCarriedObject_CurPosToTargetPos;  // 0x2200
-	vec3_t m_vecCarriedObject_CurAngToTargetAng;  // 0x220c
-	char pad_23f0[472];  // 0x2218
-	int32_t m_iEntityPortalledNetworkMessageCount;  // 0x23f0
-}
-```
-## CPortal_Player
-```cpp
-struct CPortal_Player {
-	char pad_00fc[252];  // 0x0000
-	float m_vecViewOffset[0];  // 0x00fc
-	float m_vecViewOffset[1];  // 0x0100
-	float m_vecViewOffset[2];  // 0x0104
-	char pad_0134[44];  // 0x0108
-	float m_vecOrigin[2];  // 0x0134
-}
-```
-## CPortal_Player
-```cpp
-struct CPortal_Player {
-	char pad_23d0[9168];  // 0x0000
-	int32_t iNumStepsTaken;  // 0x23d0
-	float fNumSecondsTaken;  // 0x23d4
-	float fDistanceTaken;  // 0x23d8
-}
-```
-## CPortal_Player
-```cpp
-struct CPortal_Player {
-	void *portallocaldata;  // 0x0000
-	void *portalnonlocaldata;  // 0x0000
-	char pad_1c48[7236];  // 0x0004
-	int32_t m_bPitchReorientation;  // 0x1c48
-	char pad_1c58[12];  // 0x1c4c
-	int32_t m_hPortalEnvironment;  // 0x1c58
-	char pad_1c68[12];  // 0x1c5c
-	void *m_PortalLocal;  // 0x1c68
-	char pad_1e28[444];  // 0x1c6c
+	char pad_1e28[36];  // 0x1e04
 	float m_flMotionBlurAmount;  // 0x1e28
 	char pad_1e34[8];  // 0x1e2c
 	float m_angEyeAngles[0];  // 0x1e34
@@ -1082,7 +1045,12 @@ struct CPortal_Player {
 	int32_t m_bUseVMGrab;  // 0x20d1
 	int32_t m_bUsingVMGrabState;  // 0x20d2
 	int32_t m_hAttachedObject;  // 0x20d4
-	char pad_22b8[480];  // 0x20d8
+	char pad_21ec[276];  // 0x20d8
+	vec3_t m_vecCarriedObjectAngles;  // 0x21ec
+	char pad_2200[8];  // 0x21f8
+	vec3_t m_vecCarriedObject_CurPosToTargetPos;  // 0x2200
+	vec3_t m_vecCarriedObject_CurAngToTargetAng;  // 0x220c
+	char pad_22b8[160];  // 0x2218
 	int32_t m_iSpawnCounter;  // 0x22b8
 	char pad_2371[181];  // 0x22bc
 	int32_t m_bWantsToSwapGuns;  // 0x2371
@@ -1091,6 +1059,12 @@ struct CPortal_Player {
 	void *m_Shared;  // 0x2384
 	char pad_23c8[64];  // 0x2388
 	void *m_StatsThisLevel;  // 0x23c8
+	int32_t iNumPortalsPlaced;  // 0x23cc
+	int32_t iNumStepsTaken;  // 0x23d0
+	float fNumSecondsTaken;  // 0x23d4
+	float fDistanceTaken;  // 0x23d8
+	char pad_23f0[20];  // 0x23dc
+	int32_t m_iEntityPortalledNetworkMessageCount;  // 0x23f0
 }
 ```
 ## CPortalRagdoll
@@ -1277,7 +1251,9 @@ struct CCitadelEnergyCore {
 ## CHL2_Player
 ```cpp
 struct CHL2_Player {
-	char pad_1b28[6952];  // 0x0000
+	char pad_1b20[6944];  // 0x0000
+	void *m_HL2Local;  // 0x1b20
+	float m_flSuitPower;  // 0x1b24
 	int32_t m_bZooming;  // 0x1b28
 	int32_t m_bitsActiveDevices;  // 0x1b2c
 	int32_t m_iSquadMemberCount;  // 0x1b30
@@ -1290,14 +1266,7 @@ struct CHL2_Player {
 	int32_t m_bStickyAutoAim;  // 0x1b4d
 	int32_t m_bAutoAimTarget;  // 0x1b4e
 	int32_t m_hLadder;  // 0x1b50
-}
-```
-## CHL2_Player
-```cpp
-struct CHL2_Player {
-	char pad_1b20[6944];  // 0x0000
-	void *m_HL2Local;  // 0x1b20
-	char pad_1b88[100];  // 0x1b24
+	char pad_1b88[52];  // 0x1b54
 	int32_t m_fIsSprinting;  // 0x1b88
 }
 ```
@@ -1365,7 +1334,6 @@ struct CRagdollPropAttached {
 ```cpp
 struct CRagdollProp {
 	char *m_ragAngles;  // 0x0000
-	char *m_ragPos;  // 0x0000
 	char pad_0db8[3508];  // 0x0004
 	vec3_t m_ragPos[0];  // 0x0db8
 	char pad_0ed8[276];  // 0x0dc4
@@ -1494,7 +1462,6 @@ struct CTesla {
 ```cpp
 struct CBaseTeamObjectiveResource {
 	char *m_vCPPositions;  // 0x0000
-	char *m_iszWarnSound;  // 0x0000
 	char pad_0a84[2688];  // 0x0004
 	int32_t m_iStopWatchTimer;  // 0x0a84
 	int32_t m_iNumControlPoints;  // 0x0a88
@@ -1550,7 +1517,6 @@ struct CBaseTeamObjectiveResource {
 ```cpp
 struct CTeam {
 	int32_t player_array_element;  // 0x0000
-	char *"player_array";  // 0x0000
 	char pad_0a94[2704];  // 0x0004
 	char *m_szTeamname;  // 0x0a94
 	char pad_0ab4[28];  // 0x0a98
@@ -1908,7 +1874,10 @@ struct CLightGlow {
 ## CFuncSmokeVolume
 ```cpp
 struct CFuncSmokeVolume {
-	char pad_0424[1060];  // 0x0000
+	char pad_0410[1040];  // 0x0000
+	void *m_Collision;  // 0x0410
+	char pad_0418[4];  // 0x0414
+	vec3_t m_vecMins;  // 0x0418
 	vec3_t m_vecMaxs;  // 0x0424
 	int32_t m_usSolidFlags;  // 0x0430
 	int32_t m_nSolidType;  // 0x0432
@@ -1917,14 +1886,7 @@ struct CFuncSmokeVolume {
 	int32_t m_nSurroundType;  // 0x043a
 	vec3_t m_vecSpecifiedSurroundingMins;  // 0x043c
 	vec3_t m_vecSpecifiedSurroundingMaxs;  // 0x0448
-}
-```
-## CFuncSmokeVolume
-```cpp
-struct CFuncSmokeVolume {
-	char pad_0410[1040];  // 0x0000
-	void *m_Collision;  // 0x0410
-	char pad_0b6c[1880];  // 0x0414
+	char pad_0b6c[1816];  // 0x0454
 	int32_t m_Color1;  // 0x0b6c
 	int32_t m_Color2;  // 0x0b70
 	char *m_MaterialName;  // 0x0b74
@@ -1988,7 +1950,12 @@ struct CTEDust {
 ## CFunc_Dust
 ```cpp
 struct CFunc_Dust {
-	char pad_0424[1060];  // 0x0000
+	char pad_0350[848];  // 0x0000
+	int32_t m_nModelIndex;  // 0x0350
+	char pad_0410[188];  // 0x0354
+	void *m_Collision;  // 0x0410
+	char pad_0418[4];  // 0x0414
+	vec3_t m_vecMins;  // 0x0418
 	vec3_t m_vecMaxs;  // 0x0424
 	int32_t m_usSolidFlags;  // 0x0430
 	int32_t m_nSolidType;  // 0x0432
@@ -1997,16 +1964,7 @@ struct CFunc_Dust {
 	int32_t m_nSurroundType;  // 0x043a
 	vec3_t m_vecSpecifiedSurroundingMins;  // 0x043c
 	vec3_t m_vecSpecifiedSurroundingMaxs;  // 0x0448
-}
-```
-## CFunc_Dust
-```cpp
-struct CFunc_Dust {
-	char pad_0350[848];  // 0x0000
-	int32_t m_nModelIndex;  // 0x0350
-	char pad_0410[188];  // 0x0354
-	void *m_Collision;  // 0x0410
-	char pad_0a84[1648];  // 0x0414
+	char pad_0a84[1584];  // 0x0454
 	int32_t m_SpawnRate;  // 0x0a84
 	float m_flSizeMin;  // 0x0a88
 	float m_flSizeMax;  // 0x0a8c
@@ -2100,7 +2058,6 @@ struct CEnvScreenEffect {
 ```cpp
 struct CEnvScreenOverlay {
 	char *m_iszOverlayNames;  // 0x0000
-	char *m_flOverlayTimes;  // 0x0000
 	char pad_0a80[2684];  // 0x0004
 	char *m_iszOverlayNames[0];  // 0x0a80
 	char pad_1478[2548];  // 0x0a84
@@ -2180,18 +2137,13 @@ struct CEnvDOFController {
 ## CEntityParticleTrail
 ```cpp
 struct CEntityParticleTrail {
-	char pad_0b78[2936];  // 0x0000
-	float m_flStartSize;  // 0x0b78
-	float m_flEndSize;  // 0x0b7c
-}
-```
-## CEntityParticleTrail
-```cpp
-struct CEntityParticleTrail {
 	char pad_0b68[2920];  // 0x0000
 	int32_t m_iMaterialName;  // 0x0b68
 	void *m_Info;  // 0x0b6c
-	char pad_0b80[16];  // 0x0b70
+	char pad_0b74[4];  // 0x0b70
+	float m_flLifetime;  // 0x0b74
+	float m_flStartSize;  // 0x0b78
+	float m_flEndSize;  // 0x0b7c
 	int32_t m_hConstraintEntity;  // 0x0b80
 }
 ```
@@ -2309,9 +2261,11 @@ struct CBaseToggle {
 ## CBasePlayer
 ```cpp
 struct CBasePlayer {
-	char pad_00f0[240];  // 0x0000
+	void *localdata;  // 0x0000
+	char pad_00f0[236];  // 0x0004
 	int32_t m_nNextThinkTick;  // 0x00f0
-	char pad_00fc[8];  // 0x00f4
+	int32_t m_iHealth;  // 0x00f4
+	int32_t m_fFlags;  // 0x00f8
 	float m_vecViewOffset[0];  // 0x00fc
 	float m_vecViewOffset[1];  // 0x0100
 	float m_vecViewOffset[2];  // 0x0104
@@ -2321,44 +2275,66 @@ struct CBasePlayer {
 	vec3_t m_vecBaseVelocity;  // 0x0114
 	char pad_0138[24];  // 0x0120
 	float m_flFriction;  // 0x0138
-	char pad_0356[538];  // 0x013c
-	int32_t m_nWaterLevel;  // 0x0356
-	char pad_11a4[3658];  // 0x035a
-	void *m_iAmmo;  // 0x11a4
-	char pad_1560[952];  // 0x11a8
-	int32_t m_hTonemapController;  // 0x1560
-	char pad_1690[300];  // 0x1564
-	int32_t m_hLastWeapon;  // 0x1690
-	char pad_16a8[20];  // 0x1694
-	int32_t m_fOnTarget;  // 0x16a8
-	char pad_16c4[24];  // 0x16ac
-	int32_t m_hConstraintEntity;  // 0x16c4
-	vec3_t m_vecConstraintCenter;  // 0x16c8
-	float m_flConstraintRadius;  // 0x16d4
-	float m_flConstraintWidth;  // 0x16d8
-	float m_flConstraintSpeedFactor;  // 0x16dc
-	int32_t m_bConstraintPastRadius;  // 0x16e0
-	char pad_1708[36];  // 0x16e4
-	float m_flDeathTime;  // 0x1708
-	char pad_176c[96];  // 0x170c
-	int32_t m_nTickBase;  // 0x176c
-	char pad_18cc[348];  // 0x1770
-	float m_flLaggedMovementValue;  // 0x18cc
-}
-```
-## CBasePlayer
-```cpp
-struct CBasePlayer {
-	void *localdata;  // 0x0000
-	char *m_hViewModel;  // 0x0000
-	char pad_00f4[240];  // 0x0004
-	int32_t m_iHealth;  // 0x00f4
-	int32_t m_fFlags;  // 0x00f8
-	char pad_0144[72];  // 0x00fc
+	char pad_0144[8];  // 0x013c
 	int32_t m_hGroundEntity;  // 0x0144
-	char pad_0357[527];  // 0x0148
+	char pad_0356[526];  // 0x0148
+	int32_t m_nWaterLevel;  // 0x0356
 	int32_t m_lifeState;  // 0x0357
-	char pad_1564[4617];  // 0x035b
+	char pad_11a4[3657];  // 0x035b
+	void *m_iAmmo;  // 0x11a4
+	char pad_1398[496];  // 0x11a8
+	void *m_Local;  // 0x1398
+	void *m_chAreaBits;  // 0x139c
+	char pad_13bc[28];  // 0x13a0
+	void *m_chAreaPortalBits;  // 0x13bc
+	char pad_13dc[28];  // 0x13c0
+	float m_flFOVRate;  // 0x13dc
+	int32_t m_iHideHUD;  // 0x13e0
+	int32_t m_nDuckTimeMsecs;  // 0x13e4
+	int32_t m_nDuckJumpTimeMsecs;  // 0x13e8
+	int32_t m_nJumpTimeMsecs;  // 0x13ec
+	float m_flFallVelocity;  // 0x13f0
+	float m_flStepSize;  // 0x13f4
+	vec3_t m_vecPunchAngle;  // 0x13f8
+	vec3_t m_vecPunchAngleVel;  // 0x1404
+	int32_t m_bDucked;  // 0x1410
+	int32_t m_bDucking;  // 0x1411
+	int32_t m_bInDuckJump;  // 0x1412
+	int32_t m_bDrawViewmodel;  // 0x1413
+	int32_t m_bWearingSuit;  // 0x1414
+	int32_t m_bPoisoned;  // 0x1415
+	int32_t m_bAllowAutoMovement;  // 0x1416
+	char pad_1488[110];  // 0x141a
+	int32_t m_skybox3d.scale;  // 0x1488
+	vec3_t m_skybox3d.origin;  // 0x148c
+	int32_t m_skybox3d.area;  // 0x1498
+	char pad_14a0[4];  // 0x149c
+	vec3_t m_skybox3d.fog.dirPrimary;  // 0x14a0
+	int32_t m_skybox3d.fog.colorPrimary;  // 0x14ac
+	int32_t m_skybox3d.fog.colorSecondary;  // 0x14b0
+	char pad_14bc[8];  // 0x14b4
+	float m_skybox3d.fog.start;  // 0x14bc
+	float m_skybox3d.fog.end;  // 0x14c0
+	char pad_14c8[4];  // 0x14c4
+	float m_skybox3d.fog.maxdensity;  // 0x14c8
+	char pad_14e0[20];  // 0x14cc
+	int32_t m_skybox3d.fog.enable;  // 0x14e0
+	int32_t m_skybox3d.fog.blend;  // 0x14e1
+	float m_skybox3d.fog.HDRColorScale;  // 0x14e4
+	char pad_14ec[4];  // 0x14e8
+	vec3_t m_audio.localSound[0];  // 0x14ec
+	vec3_t m_audio.localSound[1];  // 0x14f8
+	vec3_t m_audio.localSound[2];  // 0x1504
+	vec3_t m_audio.localSound[3];  // 0x1510
+	vec3_t m_audio.localSound[4];  // 0x151c
+	vec3_t m_audio.localSound[5];  // 0x1528
+	vec3_t m_audio.localSound[6];  // 0x1534
+	vec3_t m_audio.localSound[7];  // 0x1540
+	int32_t m_audio.soundscapeIndex;  // 0x154c
+	int32_t m_audio.localBits;  // 0x1550
+	int32_t m_audio.entIndex;  // 0x1554
+	char pad_1560[8];  // 0x1558
+	int32_t m_hTonemapController;  // 0x1560
 	void *pl;  // 0x1564
 	char pad_1578[16];  // 0x1568
 	int32_t m_iFOV;  // 0x1578
@@ -2379,18 +2355,30 @@ struct CBasePlayer {
 	char pad_1688[136];  // 0x1600
 	int32_t m_afPhysicsFlags;  // 0x1688
 	int32_t m_hVehicle;  // 0x168c
-	char pad_1694[4];  // 0x1690
+	int32_t m_hLastWeapon;  // 0x1690
 	int32_t m_hViewModel[0];  // 0x1694
-	char pad_16ac[20];  // 0x1698
+	char pad_16a8[16];  // 0x1698
+	int32_t m_fOnTarget;  // 0x16a8
 	int32_t m_hUseEntity;  // 0x16ac
 	int32_t m_iDefaultFOV;  // 0x16b0
 	char pad_16bc[8];  // 0x16b4
 	int32_t m_hViewEntity;  // 0x16bc
 	int32_t m_bShouldDrawPlayerWhileUsingViewEntity;  // 0x16c0
-	char pad_16e4[32];  // 0x16c4
+	int32_t m_hConstraintEntity;  // 0x16c4
+	vec3_t m_vecConstraintCenter;  // 0x16c8
+	float m_flConstraintRadius;  // 0x16d4
+	float m_flConstraintWidth;  // 0x16d8
+	float m_flConstraintSpeedFactor;  // 0x16dc
+	int32_t m_bConstraintPastRadius;  // 0x16e0
 	int32_t m_iObserverMode;  // 0x16e4
 	int32_t m_hObserverTarget;  // 0x16e8
-	char pad_18ec[512];  // 0x16ec
+	char pad_1708[28];  // 0x16ec
+	float m_flDeathTime;  // 0x1708
+	char pad_176c[96];  // 0x170c
+	int32_t m_nTickBase;  // 0x176c
+	char pad_18cc[348];  // 0x1770
+	float m_flLaggedMovementValue;  // 0x18cc
+	char pad_18ec[28];  // 0x18d0
 	char *m_szLastPlaceName;  // 0x18ec
 	char pad_1910[32];  // 0x18f0
 	int32_t m_ubEFNoInterpParity;  // 0x1910
@@ -2415,22 +2403,7 @@ struct CBaseFlex {
 ## CBaseEntity
 ```cpp
 struct CBaseEntity {
-	char pad_0424[1060];  // 0x0000
-	vec3_t m_vecMaxs;  // 0x0424
-	int32_t m_usSolidFlags;  // 0x0430
-	int32_t m_nSolidType;  // 0x0432
-	int32_t m_triggerBloat;  // 0x0433
-	char pad_043a[3];  // 0x0437
-	int32_t m_nSurroundType;  // 0x043a
-	vec3_t m_vecSpecifiedSurroundingMins;  // 0x043c
-	vec3_t m_vecSpecifiedSurroundingMaxs;  // 0x0448
-}
-```
-## CBaseEntity
-```cpp
-struct CBaseEntity {
 	int32_t movecollide;  // 0x0000
-	int32_t movetype;  // 0x0000
 	char pad_006c[104];  // 0x0004
 	int32_t m_clrRender;  // 0x006c
 	int32_t m_cellbits;  // 0x0070
@@ -2467,7 +2440,17 @@ struct CBaseEntity {
 	float m_flFadeScale;  // 0x03f0
 	char pad_0410[28];  // 0x03f4
 	void *m_Collision;  // 0x0410
-	char pad_0490[124];  // 0x0414
+	char pad_0418[4];  // 0x0414
+	vec3_t m_vecMins;  // 0x0418
+	vec3_t m_vecMaxs;  // 0x0424
+	int32_t m_usSolidFlags;  // 0x0430
+	int32_t m_nSolidType;  // 0x0432
+	int32_t m_triggerBloat;  // 0x0433
+	char pad_043a[3];  // 0x0437
+	int32_t m_nSurroundType;  // 0x043a
+	vec3_t m_vecSpecifiedSurroundingMins;  // 0x043c
+	vec3_t m_vecSpecifiedSurroundingMaxs;  // 0x0448
+	char pad_0490[60];  // 0x0454
 	float m_flElasticity;  // 0x0490
 	float m_flShadowCastDistance;  // 0x0494
 	char pad_0568[208];  // 0x0498
@@ -2637,36 +2620,21 @@ struct CBaseGrenade {
 ## CBaseCombatWeapon
 ```cpp
 struct CBaseCombatWeapon {
-	char pad_0dbc[3516];  // 0x0000
-	int32_t m_nViewModelIndex;  // 0x0dbc
-	char pad_0dd4[20];  // 0x0dc0
-	int32_t m_iPrimaryAmmoType;  // 0x0dd4
-	int32_t m_iSecondaryAmmoType;  // 0x0dd8
-	char pad_0de0[4];  // 0x0ddc
-	int32_t m_iClip2;  // 0x0de0
-}
-```
-## CBaseCombatWeapon
-```cpp
-struct CBaseCombatWeapon {
-	char pad_00f0[240];  // 0x0000
-	int32_t m_nNextThinkTick;  // 0x00f0
-	char pad_0dc4[3280];  // 0x00f4
-	float m_flNextSecondaryAttack;  // 0x0dc4
-	char pad_0de4[28];  // 0x0dc8
-	float m_flTimeWeaponIdle;  // 0x0de4
-}
-```
-## CBaseCombatWeapon
-```cpp
-struct CBaseCombatWeapon {
 	void *LocalWeaponData;  // 0x0000
-	void *LocalActiveWeaponData;  // 0x0000
-	char pad_0db8[3508];  // 0x0004
+	char pad_00f0[236];  // 0x0004
+	int32_t m_nNextThinkTick;  // 0x00f0
+	char pad_0db8[3268];  // 0x00f4
 	int32_t m_hOwner;  // 0x0db8
-	char pad_0dc8[12];  // 0x0dbc
+	int32_t m_nViewModelIndex;  // 0x0dbc
+	float m_flNextPrimaryAttack;  // 0x0dc0
+	float m_flNextSecondaryAttack;  // 0x0dc4
 	int32_t m_iViewModelIndex;  // 0x0dc8
 	int32_t m_iWorldModelIndex;  // 0x0dcc
 	int32_t m_iState;  // 0x0dd0
+	int32_t m_iPrimaryAmmoType;  // 0x0dd4
+	int32_t m_iSecondaryAmmoType;  // 0x0dd8
+	int32_t m_iClip1;  // 0x0ddc
+	int32_t m_iClip2;  // 0x0de0
+	float m_flTimeWeaponIdle;  // 0x0de4
 }
 ```
