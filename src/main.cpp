@@ -43,9 +43,20 @@ void dump_sigs( ) {
 		/* find import address of log functions */
 		std::vector<std::uint8_t *> addrs;
 
-		const char *syms[ 2 ] = {
+		const char *syms[ 13 ] = {
 			"?EnterScope@CVProfile@@QAEXPBDH0_NH@Z",
-			"COM_TimestampedLog" };
+			"?DevWarning@@YAXPBDZZ",
+			"CommandLine",
+			"Msg",
+			"Error",
+			"DevWarning",
+			"Warning",
+			"?DevMsg@@YAXPBDZZ",
+			"?ConColorMsg@@YAXABVColor@@PBDZZ",
+			"ConDMsg",
+			"COM_TimestampedLog",
+			"?LoggingSystem_Log@@YA?AW4LoggingResponse_t@@HW4LoggingSeverity_t@@VColor@@PBDZZ",
+			"DevMsg" };
 		for ( const auto sym : syms ) {
 			const auto fn = util::mem::get_import_addr( module.base, "tier0.dll", sym );
 
@@ -60,14 +71,7 @@ void dump_sigs( ) {
 		if ( addrs.empty( ) )
 			continue;
 
-		printf( "[+] %s: 0/%d\r", module.name, addrs.size( ) );
-
-		file << util::str::ssprintf( "## %s", module.name ) << std::endl;
-		file << "|Function|Signature|" << std::endl;
-		file << "|---|---|" << std::endl;
-
-		std::string prev_pattern;
-		size_t distinct = 0;  // number of distinct functions
+		std::set<std::string> patterns;
 		for ( const auto addr : addrs ) {
 			if ( aborted ) {
 				printf( "\n[-] aborting...\n" );
@@ -84,24 +88,59 @@ void dump_sigs( ) {
 			uint8_t *p = addr - sizeof( void * );
 			while ( p[ 0 ] != 0x68 && addr - p < 32 ) {
 				--p;
-				if ( p[ 0 ] == 0x68 )
-					name = std::string( *reinterpret_cast<const char **>( p + 0x1 ) );
+				if ( p[ 0 ] == 0x68 ) {
+					/* fuk it */
+					try {
+						name = std::string( *reinterpret_cast<const char **>( p + 0x1 ) );
+					} catch ( ... ) {
+						continue;
+					}
+				}
 			}
 
 			/* remove newlines */
 			name.erase( std::remove( name.begin( ), name.end( ), '\n' ), name.end( ) );
+
+			/* ==== check if looks like a function ==== */
+			/* check special characters */
+			size_t char_pos = name.find( "::" );
+			if ( char_pos == std::string::npos ) char_pos = name.find( "()" );
+			if ( char_pos == std::string::npos ) char_pos = name.find( "_" );
+			if ( char_pos == std::string::npos ) continue;
+
+			/* strip down to fn name */
+			size_t start_pos = name.substr( 0, char_pos ).find_last_of( " !#$%&\"()*+,-." );
+			if ( start_pos == std::string::npos ) start_pos = 0;
+			size_t end_pos1 = name.substr( char_pos ).find_first_of( " !#$%&\"()*+,-." );
+			size_t end_pos2 = name.substr( char_pos + 2 ).find( ":" );
+			if ( end_pos2 != std::string::npos ) end_pos2 += 2;
+			size_t end_pos = min( end_pos1, end_pos2 );  // whichever one comes first
+			if ( end_pos == std::string::npos ) end_pos = name.length( );
+			name = name.substr( start_pos, end_pos - start_pos + char_pos );
+
+			/* check all lower or all uppercase (Valve uses CamelCase so this shouldnt happen) */
+			bool lowercase = true;
+			bool uppercase = true;
+			for ( char &c : name ) {
+				if ( isupper( c ) )
+					lowercase = false;
+				else if ( islower( c ) )
+					uppercase = false;
+			}
+			if ( lowercase || uppercase )
+				continue;
 
 			/* find start of fn to make signature */
 			/*
 			 * TODO: find better way to trace back the start of a function
 			 * with this current one we miss a lot and get some wrong signatures
 			 */
-			while ( *( uint32_t * ) p != 0xEC8B55CC ) {
+			while ( !( *( uint32_t * ) p == 0xEC8B55CC || *( uint32_t * ) p == 0xEC8B55C3 ) ) {
 				--p;
-				if ( *( uint32_t * ) p == 0xEC8B55CC ) {
+				if ( *( uint32_t * ) p == 0xEC8B55CC || *( uint32_t * ) p == 0xEC8B55C3 ) {
 					/* create signature */
 					++p;
-					for ( size_t j = 0; j < 64; ) {
+					for ( size_t j = 0; j < 50; ) {
 						/* disassemble instruction to see if we need to add wildcards */
 						hde32s ins;
 						hde32_disasm( p + j, &ins );
@@ -144,20 +183,26 @@ void dump_sigs( ) {
 			pattern.pop_back( );
 
 			/* finally append to file */
-			if ( !name.empty( ) && !pattern.empty( ) && pattern != prev_pattern ) {
+			if ( !name.empty( ) && !pattern.empty( ) && patterns.find( pattern ) == patterns.end( ) ) {
+				if ( patterns.empty( ) ) {
+					printf( "[+] %s: 0/%d\r", module.name, addrs.size( ) );
+
+					file << util::str::ssprintf( "## %s", module.name ) << std::endl;
+					file << "|Function|Signature|" << std::endl;
+					file << "|---|---|" << std::endl;
+				}
+
+				patterns.insert( pattern );
+
 				file << util::str::ssprintf( "|%s|`%s`|", name.c_str( ), pattern.c_str( ) ) << std::endl;
 
-				++distinct;
-
-				printf( "[+] %s: %d/%d\r", module.name, distinct, addrs.size( ) );
-
-				prev_pattern = pattern;
+				printf( "[+] %s: %d/%d\r", module.name, patterns.size( ), addrs.size( ) );
 			}
 		}
 
-		count += distinct;
+		count += patterns.size( );
 
-		printf( "[+] %s: %d/%d (DONE)\n", module.name, distinct, addrs.size( ) );
+		printf( "[+] %s: %d/%d (DONE)\n", module.name, patterns.size( ), addrs.size( ) );
 	}
 
 	file.close( );
@@ -245,7 +290,7 @@ void dump_netvars( ) {
 				last_prop = client_class.props[ i - 1 ];
 
 			/* type information */
-			std::vector<std::pair<const char *, size_t>> types {
+			std::pair<const char *, size_t> types[ 9 ] {
 				{ "unknown", 0 },
 				{ "int32_t ", 4 },
 				{ "float ", 4 },
@@ -396,7 +441,9 @@ void main( HMODULE instance ) {
 
 void exit_thread( ) {
 	while ( !aborted ) {
-		if ( GetAsyncKeyState( VK_ESCAPE ) ) {
+		/* dont listen to keypress while tabbed out */
+		HWND hwnd = GetConsoleWindow( );
+		if ( GetAsyncKeyState( VK_ESCAPE ) && GetForegroundWindow( ) == hwnd ) {
 			aborted = true;
 			break;
 		}
