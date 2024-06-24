@@ -28,8 +28,8 @@ namespace util {
 			char name[ MAX_PATH ];
 			void *base;
 		};
-		std::vector<module_info_t> dump_modules( ) {
-			std::vector<module_info_t> result;
+		std::vector< module_info_t > dump_modules( ) {
+			std::vector< module_info_t > result;
 
 			HMODULE mods[ 1024 ];
 			HANDLE proc = GetCurrentProcess( );
@@ -62,13 +62,13 @@ namespace util {
 		}
 
 		std::uint8_t *get_import_addr( void *module_handle, const char *import_dll, const char *symbol ) {
-			auto dos_header = reinterpret_cast<PIMAGE_DOS_HEADER>( module_handle );
-			auto nt_headers = reinterpret_cast<PIMAGE_NT_HEADERS>( reinterpret_cast<std::uint8_t *>( module_handle ) + dos_header->e_lfanew );
+			auto dos_header = reinterpret_cast< PIMAGE_DOS_HEADER >( module_handle );
+			auto nt_headers = reinterpret_cast< PIMAGE_NT_HEADERS >( reinterpret_cast< std::uint8_t * >( module_handle ) + dos_header->e_lfanew );
 
-			auto imports = reinterpret_cast<PIMAGE_IMPORT_DESCRIPTOR>( reinterpret_cast<std::uint8_t *>( dos_header ) + nt_headers->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_IMPORT ].VirtualAddress );
+			auto imports = reinterpret_cast< PIMAGE_IMPORT_DESCRIPTOR >( reinterpret_cast< std::uint8_t * >( dos_header ) + nt_headers->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_IMPORT ].VirtualAddress );
 
 			for ( int i = 0; imports[ i ].Characteristics != 0; ++i ) {
-				auto dll_name = reinterpret_cast<char *>( reinterpret_cast<std::uint8_t *>( dos_header ) + imports[ i ].Name );
+				auto dll_name = reinterpret_cast< char * >( reinterpret_cast< std::uint8_t * >( dos_header ) + imports[ i ].Name );
 
 				if ( _strcmpi( dll_name, import_dll ) == 0 ) {
 					PIMAGE_THUNK_DATA thunk;
@@ -77,30 +77,30 @@ namespace util {
 					if ( !imports[ i ].FirstThunk || !imports[ i ].OriginalFirstThunk )
 						return nullptr;
 
-					thunk = reinterpret_cast<PIMAGE_THUNK_DATA>( reinterpret_cast<std::uint8_t *>( dos_header ) + imports[ i ].FirstThunk );
-					orig_thunk = reinterpret_cast<PIMAGE_THUNK_DATA>( reinterpret_cast<std::uint8_t *>( dos_header ) + imports[ i ].OriginalFirstThunk );
+					thunk = reinterpret_cast< PIMAGE_THUNK_DATA >( reinterpret_cast< std::uint8_t * >( dos_header ) + imports[ i ].FirstThunk );
+					orig_thunk = reinterpret_cast< PIMAGE_THUNK_DATA >( reinterpret_cast< std::uint8_t * >( dos_header ) + imports[ i ].OriginalFirstThunk );
 
 					for ( ; orig_thunk->u1.Function != NULL; orig_thunk++, thunk++ ) {
 						if ( orig_thunk->u1.Ordinal & IMAGE_ORDINAL_FLAG )
 							continue;
 
-						PIMAGE_IMPORT_BY_NAME import = reinterpret_cast<PIMAGE_IMPORT_BY_NAME>( reinterpret_cast<std::uint8_t *>( dos_header ) + orig_thunk->u1.AddressOfData );
+						PIMAGE_IMPORT_BY_NAME import = reinterpret_cast< PIMAGE_IMPORT_BY_NAME >( reinterpret_cast< std::uint8_t * >( dos_header ) + orig_thunk->u1.AddressOfData );
 
 						if ( strcmp( symbol, ( char * ) import->Name ) == 0 ) {
-							return reinterpret_cast<std::uint8_t *>( thunk );
+							return reinterpret_cast< std::uint8_t * >( thunk );
 						}
 					}
 				}
 			}
 		}
 
-		std::vector<std::uint8_t *> multi_scan( void *module_handle, const char *signature ) noexcept {
-			std::vector<std::uint8_t *> result;
+		std::vector< std::uint8_t * > multi_scan( void *module_handle, const char *signature ) noexcept {
+			std::vector< std::uint8_t * > result;
 
 			static auto pattern_to_byte = []( const char *pattern ) {
-				auto bytes = std::vector<int> { };
-				auto start = const_cast<char *>( pattern );
-				auto end = const_cast<char *>( pattern ) + std::strlen( pattern );
+				auto bytes = std::vector< int > { };
+				auto start = const_cast< char * >( pattern );
+				auto end = const_cast< char * >( pattern ) + std::strlen( pattern );
 
 				for ( auto current = start; current < end; ++current ) {
 					if ( *current == '?' ) {
@@ -117,12 +117,12 @@ namespace util {
 				return bytes;
 			};
 
-			auto dos_header = reinterpret_cast<PIMAGE_DOS_HEADER>( module_handle );
-			auto nt_headers = reinterpret_cast<PIMAGE_NT_HEADERS>( reinterpret_cast<std::uint8_t *>( module_handle ) + dos_header->e_lfanew );
+			auto dos_header = reinterpret_cast< PIMAGE_DOS_HEADER >( module_handle );
+			auto nt_headers = reinterpret_cast< PIMAGE_NT_HEADERS >( reinterpret_cast< std::uint8_t * >( module_handle ) + dos_header->e_lfanew );
 
 			auto size_of_image = nt_headers->OptionalHeader.SizeOfImage;
 			auto pattern_bytes = pattern_to_byte( signature );
-			auto scan_bytes = reinterpret_cast<std::uint8_t *>( module_handle );
+			auto scan_bytes = reinterpret_cast< std::uint8_t * >( module_handle );
 
 			auto s = pattern_bytes.size( );
 			auto d = pattern_bytes.data( );
@@ -143,14 +143,14 @@ namespace util {
 			return result;
 		}
 
-		std::vector<std::uint8_t *> multi_scan( void *module_handle, std::uint8_t *pattern_bytes, std::size_t pattern_size ) noexcept {
-			std::vector<std::uint8_t *> result;
+		std::vector< std::uint8_t * > multi_scan( void *module_handle, std::uint8_t *pattern_bytes, std::size_t pattern_size ) noexcept {
+			std::vector< std::uint8_t * > result;
 
-			auto dos_header = reinterpret_cast<PIMAGE_DOS_HEADER>( module_handle );
-			auto nt_headers = reinterpret_cast<PIMAGE_NT_HEADERS>( reinterpret_cast<std::uint8_t *>( module_handle ) + dos_header->e_lfanew );
+			auto dos_header = reinterpret_cast< PIMAGE_DOS_HEADER >( module_handle );
+			auto nt_headers = reinterpret_cast< PIMAGE_NT_HEADERS >( reinterpret_cast< std::uint8_t * >( module_handle ) + dos_header->e_lfanew );
 
 			auto size_of_image = nt_headers->OptionalHeader.SizeOfImage;
-			auto scan_bytes = reinterpret_cast<std::uint8_t *>( module_handle );
+			auto scan_bytes = reinterpret_cast< std::uint8_t * >( module_handle );
 
 			auto s = pattern_size;
 			auto d = pattern_bytes;

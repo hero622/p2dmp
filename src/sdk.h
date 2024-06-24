@@ -5,7 +5,7 @@
 #include <cstdint>
 
 namespace sdk {
-	template <typename t>
+	template < typename t >
 	t *get_interface( const char *module_name, const char *interface_name ) {
 		using create_interface_fn = t *( * ) ( const char *, int * );
 		const auto fn = ( create_interface_fn ) GetProcAddress( GetModuleHandleA( module_name ), "CreateInterface" );

@@ -41,7 +41,7 @@ void dump_sigs( ) {
 
 	for ( const auto module : util::mem::dump_modules( ) ) {
 		/* find import address of log functions */
-		std::vector<std::uint8_t *> addrs;
+		std::vector< std::uint8_t * > addrs;
 
 		const char *syms[ 13 ] = {
 			"?EnterScope@CVProfile@@QAEXPBDH0_NH@Z",
@@ -71,7 +71,7 @@ void dump_sigs( ) {
 		if ( addrs.empty( ) )
 			continue;
 
-		std::set<std::string> patterns;
+		std::set< std::string > patterns;
 		for ( const auto addr : addrs ) {
 			if ( aborted ) {
 				printf( "\n[-] aborting...\n" );
@@ -91,7 +91,7 @@ void dump_sigs( ) {
 				if ( p[ 0 ] == 0x68 ) {
 					/* fuk it */
 					try {
-						name = std::string( *reinterpret_cast<const char **>( p + 0x1 ) );
+						name = std::string( *reinterpret_cast< const char ** >( p + 0x1 ) );
 					} catch ( ... ) {
 						continue;
 					}
@@ -222,20 +222,20 @@ void dump_netvars( ) {
 	file << "# Netvars" << std::endl;
 	LOG_TIMESTAMP( );
 
-	const auto client = sdk::get_interface<sdk::i_client>( "client.dll", "VClient016" );
+	const auto client = sdk::get_interface< sdk::i_client >( "client.dll", "VClient016" );
 
 	/* ==== recursively dump all netvars ==== */
 	size_t count = 0;
 
 	struct recv_class {
 		std::string name;
-		std::vector<sdk::recv_prop> props;
+		std::vector< sdk::recv_prop > props;
 	};
-	std::vector<recv_class> classes;
+	std::vector< recv_class > classes;
 
 	recv_class cur_class;
 
-	std::function<void( const char *, sdk::recv_table *, uint32_t )> recursive_dump;
+	std::function< void( const char *, sdk::recv_table *, uint32_t ) > recursive_dump;
 	recursive_dump = [ & ]( const char *baseclass, sdk::recv_table *table, uint32_t offset ) {
 		for ( size_t i = 0; i < table->props_count; ++i ) {
 			const auto prop = &table->props[ i ];
@@ -295,7 +295,7 @@ void dump_netvars( ) {
 			}
 
 			/* type information */
-			std::pair<const char *, size_t> types[ 9 ] {
+			std::pair< const char *, size_t > types[ 9 ] {
 				{ "unknown", 0 },
 				{ "int32_t ", 4 },
 				{ "float ", 4 },
@@ -373,7 +373,7 @@ void dump_ifaces( ) {
 			file << "|---|---|" << std::endl;
 
 			/* filter out unique */
-			std::set<const char *> ifaces;
+			std::set< const char * > ifaces;
 			for ( interface_reg *cur = reg; cur; cur = cur->next ) {
 				ifaces.insert( cur->name );
 			}
@@ -393,9 +393,9 @@ void dump_ifaces( ) {
 void main( HMODULE instance ) {
 	/* attach console */
 	AllocConsole( );
-	freopen_s( reinterpret_cast<_iobuf **>( __acrt_iob_func( 0 ) ), "conin$", "r", static_cast<_iobuf *>( __acrt_iob_func( 0 ) ) );
-	freopen_s( reinterpret_cast<_iobuf **>( __acrt_iob_func( 1 ) ), "conout$", "w", static_cast<_iobuf *>( __acrt_iob_func( 1 ) ) );
-	freopen_s( reinterpret_cast<_iobuf **>( __acrt_iob_func( 2 ) ), "conout$", "w", static_cast<_iobuf *>( __acrt_iob_func( 2 ) ) );
+	freopen_s( reinterpret_cast< _iobuf ** >( __acrt_iob_func( 0 ) ), "conin$", "r", static_cast< _iobuf * >( __acrt_iob_func( 0 ) ) );
+	freopen_s( reinterpret_cast< _iobuf ** >( __acrt_iob_func( 1 ) ), "conout$", "w", static_cast< _iobuf * >( __acrt_iob_func( 1 ) ) );
+	freopen_s( reinterpret_cast< _iobuf ** >( __acrt_iob_func( 2 ) ), "conout$", "w", static_cast< _iobuf * >( __acrt_iob_func( 2 ) ) );
 
 	/* fancy print */
 	printf( R"(
@@ -435,9 +435,9 @@ void main( HMODULE instance ) {
 	Sleep( 3000 );
 
 	/* deattach console */
-	fclose( static_cast<_iobuf *>( __acrt_iob_func( 0 ) ) );
-	fclose( static_cast<_iobuf *>( __acrt_iob_func( 1 ) ) );
-	fclose( static_cast<_iobuf *>( __acrt_iob_func( 2 ) ) );
+	fclose( static_cast< _iobuf * >( __acrt_iob_func( 0 ) ) );
+	fclose( static_cast< _iobuf * >( __acrt_iob_func( 1 ) ) );
+	fclose( static_cast< _iobuf * >( __acrt_iob_func( 2 ) ) );
 	FreeConsole( );
 
 	/* exit thread */
@@ -461,8 +461,8 @@ int __stdcall DllMain( HMODULE module, DWORD reason_for_call, LPVOID reserved ) 
 	if ( reason_for_call == DLL_PROCESS_ATTACH ) {
 		DisableThreadLibraryCalls( module );
 
-		const auto thread = CreateThread( nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>( main ), module, 0, nullptr );
-		CreateThread( nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>( exit_thread ), nullptr, 0, nullptr );
+		const auto thread = CreateThread( nullptr, 0, reinterpret_cast< LPTHREAD_START_ROUTINE >( main ), module, 0, nullptr );
+		CreateThread( nullptr, 0, reinterpret_cast< LPTHREAD_START_ROUTINE >( exit_thread ), nullptr, 0, nullptr );
 
 		if ( thread )
 			CloseHandle( thread );
