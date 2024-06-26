@@ -13,7 +13,6 @@ private:
 		std::string name;
 		int type;
 		int offset;
-		bool is_netvar;
 	};
 	struct class_t {
 		std::string name;
@@ -58,7 +57,6 @@ private:
 				custom_prop.name = prop->prop_name;
 				custom_prop.type = prop->prop_type + 1;  // shift by 1, idx 0 is for unknown
 				custom_prop.offset = offset + prop->offset;
-				custom_prop.is_netvar = true;
 				g_cur_class->props.push_back( custom_prop );
 
 				++count;
@@ -110,7 +108,6 @@ private:
 				custom_prop.name = prop->field_name;
 				custom_prop.type = prop->field_type + 9;
 				custom_prop.offset = prop->field_offset;
-				custom_prop.is_netvar = false;
 				g_cur_class->props.push_back( custom_prop );
 
 				++count;
@@ -121,7 +118,7 @@ private:
 	/*
 	 * get type information like name, size
 	 */
-	static std::pair< const char *, size_t > get_type( prop_t &prop ) {
+	static std::pair< const char *, size_t > get_type( prop_t *prop ) {
 		/* type information */
 		std::pair< const char *, size_t > types[ 40 ] {
 			/* name, size */
@@ -168,7 +165,7 @@ private:
 			{ "void *", 4 },
 		};
 
-		return types[ prop.type ];
+		return types[ prop->type ];
 	}
 
 public:
@@ -205,21 +202,21 @@ public:
 			for ( size_t i = 0; i < client_class.props.size( ); ++i ) {
 				const auto prop = &client_class.props[ i ];
 
-				auto last_prop = prop_t( );
+				auto last_prop = new prop_t( );
 				if ( i > 0 ) {
-					last_prop = client_class.props[ i - 1 ];
+					last_prop = &client_class.props[ i - 1 ];
 
-					if ( prop->offset == last_prop.offset )
+					if ( prop->offset == last_prop->offset )
 						continue;
 				}
 
 				/* add alignment offset */
-				int offset = prop->offset - last_prop.offset - get_type( last_prop ).second;
+				int offset = prop->offset - last_prop->offset - get_type( last_prop ).second;
 				if ( offset > 0 ) {
-					file << util::str::ssprintf( "	char pad_%04x[%d];  // 0x%04x", prop->offset, offset, last_prop.offset + get_type( last_prop ).second ) << std::endl;
+					file << util::str::ssprintf( "	char pad_%04x[%d];  // 0x%04x", prop->offset, offset, last_prop->offset + get_type( last_prop ).second ) << std::endl;
 				}
 
-				file << util::str::ssprintf( "	%s%s;  // 0x%04x", get_type( last_prop ).first, prop->name.c_str( ), prop->offset ) << std::endl;
+				file << util::str::ssprintf( "	%s%s;  // 0x%04x", get_type( prop ).first, prop->name.c_str( ), prop->offset ) << std::endl;
 			}
 
 			file << "}\n```" << std::endl;
