@@ -6,6 +6,17 @@
 #include <string>
 #include <vector>
 
+#pragma warning( disable : 4996 );
+
+#define LOG_TIMESTAMP( )                                                                                                                   \
+	{                                                                                                                                         \
+		time_t now = time( 0 );                                                                                                                  \
+		tm *gmtm = gmtime( &now );                                                                                                               \
+		char buf[ 80 ];                                                                                                                          \
+		strftime( buf, sizeof( buf ), "%d/%m/%Y at %X", gmtm );                                                                                  \
+		file << util::str::ssprintf( "This dump was generated using [p2dmp](https://github.com/hero622/p2dmp) on %s (UTC).", buf ) << std::endl; \
+	}
+
 namespace util {
 	namespace str {
 		std::string ssprintf( const char *fmt, ... ) {

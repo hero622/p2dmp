@@ -97,6 +97,7 @@
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -117,6 +118,7 @@
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,6 +139,7 @@
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -157,6 +160,7 @@
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -171,9 +175,12 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="classes.h" />
     <ClInclude Include="hde\hde32.h" />
     <ClInclude Include="hde\table32.h" />
+    <ClInclude Include="interfaces.h" />
     <ClInclude Include="sdk.h" />
+    <ClInclude Include="signatures.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
