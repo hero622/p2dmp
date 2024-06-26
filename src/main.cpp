@@ -9,7 +9,6 @@
 #include <functional>
 #include <iostream>
 #include <set>
-#include <unordered_map>
 
 #pragma warning( disable : 4996 );
 
@@ -211,15 +210,15 @@ void dump_sigs( ) {
 }
 
 /*
- * dump netvars from list
+ * dump classes built from netvars and datamaps
  */
-void dump_netvars( ) {
-	printf( "[+] dumping netvars...\n" );
+void dump_classes( ) {
+	printf( "[+] dumping classes...\n" );
 
 	/* open file for writing */
 	std::ofstream file;
-	file.open( "netvars.md" );
-	file << "# Netvars" << std::endl;
+	file.open( "classes.md" );
+	file << "# Classes" << std::endl;
 	LOG_TIMESTAMP( );
 
 	const auto client = sdk::get_interface< sdk::i_client >( "client.dll", "VClient016" );
@@ -227,13 +226,20 @@ void dump_netvars( ) {
 	/* ==== recursively dump all netvars ==== */
 	size_t count = 0;
 
-	struct recv_class {
+	struct sdk_prop {
 		std::string name;
-		std::vector< sdk::recv_prop > props;
+		int type;
+		int offset;
+		bool is_netvar;
 	};
-	std::vector< recv_class > classes;
 
-	recv_class cur_class;
+	struct sdk_class {
+		std::string name;
+		std::vector< sdk_prop > props;
+	};
+	std::vector< sdk_class > classes;
+
+	auto cur_class = new sdk_class( );
 
 	std::function< void( const char *, sdk::recv_table *, uint32_t ) > recursive_dump;
 	recursive_dump = [ & ]( const char *baseclass, sdk::recv_table *table, uint32_t offset ) {
@@ -247,11 +253,13 @@ void dump_netvars( ) {
 			if ( !prop || isdigit( prop->prop_name[ 0 ] ) )
 				continue;
 
-			if ( i == 0 && baseclass != cur_class.name ) {
-				cur_class = recv_class( );
-				cur_class.name = baseclass;
-				if ( !cur_class.name.empty( ) )
-					classes.push_back( cur_class );
+			if ( i == 0 && baseclass != cur_class->name ) {
+				auto tmp = sdk_class( );
+				tmp.name = baseclass;
+				if ( !tmp.name.empty( ) ) {
+					classes.push_back( tmp );
+					cur_class = &classes.back( );
+				}
 
 				continue;
 			}
@@ -259,10 +267,12 @@ void dump_netvars( ) {
 			if ( prop->prop_type == sdk::send_prop_type::_data_table && prop->data_table && prop->data_table->table_name[ 0 ] == 'D' )
 				recursive_dump( baseclass, prop->data_table, offset + prop->offset );
 
-			sdk::recv_prop custom_prop = *prop;
+			sdk_prop custom_prop;
+			custom_prop.name = prop->prop_name;
+			custom_prop.type = prop->prop_type + 1;
 			custom_prop.offset = offset + prop->offset;
-			custom_prop.prop_type = ( sdk::send_prop_type )( custom_prop.prop_type + 1 );
-			classes.back( ).props.push_back( custom_prop );
+			custom_prop.is_netvar = true;
+			cur_class->props.push_back( custom_prop );
 
 			++count;
 		}
@@ -274,19 +284,62 @@ void dump_netvars( ) {
 			recursive_dump( client_class->network_name, client_class->recvtable_ptr, 0 );
 	}
 
+	/* ==== dump datamaps ==== */
+	const auto addrs = util::mem::multi_scan( GetModuleHandleA( "client.dll" ), "C7 05 ? ? ? ? ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3 CC" );
+	for ( const auto addr : addrs ) {
+		sdk::datamap_t *map = reinterpret_cast< sdk::datamap_t * >( *( uintptr_t * ) ( addr + 0x2 ) - sizeof( void * ) );
+
+		/* sanity checks */
+		if ( !map || !map->data_num_fields || map->data_num_fields > 200 || !map->data_desc || !map->data_class_name )
+			continue;
+
+		for ( int i = 0; i < map->data_num_fields; ++i ) {
+			const auto prop = &map->data_desc[ i ];
+			if ( !prop->field_name )
+				continue;
+
+			if ( i == 0 ) {
+				/* check if class already exists, if not make new one */
+				auto it = std::find_if( classes.begin( ), classes.end( ), [ & ]( const sdk_class &x ) {
+					return x.name == map->data_class_name;
+				} );
+				if ( it != classes.end( ) )
+					cur_class = &classes[ std::distance( classes.begin( ), it ) ];
+				else {
+					auto tmp = sdk_class( );
+					tmp.name = map->data_class_name;
+					if ( !tmp.name.empty( ) ) {
+						classes.push_back( tmp );
+						cur_class = &classes.back( );
+					}
+				}
+			}
+
+			sdk_prop custom_prop;
+			custom_prop.name = prop->field_name;
+			custom_prop.type = prop->field_type + 9;
+			custom_prop.offset = prop->field_offset;
+			custom_prop.is_netvar = false;
+			cur_class->props.push_back( custom_prop );
+
+			++count;
+		}
+	}
+
+	/* ==== write dumps to file ==== */
 	for ( auto &client_class : classes ) {
 		file << util::str::ssprintf( "## %s", client_class.name.c_str( ) ) << std::endl;
 		file << util::str::ssprintf( "```cpp\nstruct %s {", client_class.name.c_str( ) ) << std::endl;
 
 		/* sort by offset */
-		std::sort( client_class.props.begin( ), client_class.props.end( ), []( const sdk::recv_prop &lhs, const sdk::recv_prop &rhs ) {
+		std::sort( client_class.props.begin( ), client_class.props.end( ), []( const sdk_prop &lhs, const sdk_prop &rhs ) {
 			return lhs.offset < rhs.offset;
 		} );
 
 		for ( size_t i = 0; i < client_class.props.size( ); ++i ) {
 			const auto prop = &client_class.props[ i ];
 
-			auto last_prop = sdk::recv_prop( );
+			auto last_prop = sdk_prop( );
 			if ( i > 0 ) {
 				last_prop = client_class.props[ i - 1 ];
 
@@ -295,8 +348,8 @@ void dump_netvars( ) {
 			}
 
 			/* type information */
-			std::pair< const char *, size_t > types[ 9 ] {
-				{ "unknown", 0 },
+			std::pair< const char *, size_t > types[ 40 ] {
+				{ "void ", 0 },  // NOTE: this is shifted
 				{ "int32_t ", 4 },
 				{ "float ", 4 },
 				{ "vec3_t ", 12 },
@@ -304,15 +357,48 @@ void dump_netvars( ) {
 				{ "char *", 4 },
 				{ "char *", 4 },  // not sure bout this one
 				{ "void *", 4 },  // not sure bout this one
-				{ "int64_t ", 8 } };
+				{ "int64_t ", 8 },
+				{ "void ", 0 },
+				{ "float ", 4 },
+				{ "char *", 4 },
+				{ "vec3_t ", 12 },
+				{ "vec4_t ", 16 },
+				{ "int32_t ", 4 },
+				{ "bool ", 1 },  // ORIGINAL NOTE: boolean, implemented as an int, I may use this as a hint for compression
+				{ "int16_t ", 2 },
+				{ "char ", 1 },
+				{ "Color ", 32 },
+				{ "void *", 4 },  // idk bout this one
+				{ "void *", 4 },  // ditto
+				{ "CBaseEntity *", 4 },
+				{ "EHandle ", 4 },
+				{ "edict_t *", 4 },
+				{ "vec3_t ", 12 },
+				{ "float ", 4 },
+				{ "int32_t ", 4 },  // might be unsigned
+				{ "char *", 4 },
+				{ "char *", 4 },
+				{ "void *", 4 },  // IDK
+				{ "void *", 4 },
+				{ "VMatrix ", 64 },
+				{ "VMatrix ", 64 },
+				{ "matrix3x4_t", 48 },
+				{ "float ", 4 },
+				{ "int32_t ", 4 },  // might be size_t
+				{ "int32_t ", 4 },  // this too
+				{ "vec2_t ", 8 },
+				/* only here because some of them are incorrect */
+				{ "void *", 4 },
+				{ "void *", 4 },
+			};
 
 			/* add alignment offset */
-			int offset = prop->offset - last_prop.offset - types[ last_prop.prop_type ].second;
+			int offset = prop->offset - last_prop.offset - types[ last_prop.type ].second;
 			if ( offset > 0 ) {
-				file << util::str::ssprintf( "	char pad_%04x[%d];  // 0x%04x", prop->offset, offset, last_prop.offset + types[ last_prop.prop_type ].second ) << std::endl;
+				file << util::str::ssprintf( "	char pad_%04x[%d];  // 0x%04x", prop->offset, offset, last_prop.offset + types[ last_prop.type ].second ) << std::endl;
 			}
 
-			file << util::str::ssprintf( "	%s%s;  // 0x%04x", types[ prop->prop_type ].first, prop->prop_name, prop->offset ) << std::endl;
+			file << util::str::ssprintf( "	%s%s;  // 0x%04x", types[ prop->type ].first, prop->name.c_str( ), prop->offset ) << std::endl;
 		}
 
 		file << "}\n```" << std::endl;
@@ -320,7 +406,7 @@ void dump_netvars( ) {
 
 	file.close( );
 
-	printf( "[+] dumped %d netvars to \"netvars.md\".\n", count );
+	printf( "[+] dumped %d fields to \"classes.md\".\n", count );
 }
 
 /*
@@ -408,7 +494,7 @@ void main( HMODULE instance ) {
 )" );
 	printf( "\nwhat would you like to dump?\n" );
 	printf( "1. signatures\n" );
-	printf( "2. netvars\n" );
+	printf( "2. classes\n" );
 	printf( "3. interfaces\n" );
 	printf( "> " );
 
@@ -420,7 +506,7 @@ void main( HMODULE instance ) {
 		dump_sigs( );
 		break;
 	case 2:
-		dump_netvars( );
+		dump_classes( );
 		break;
 	case 3:
 		dump_ifaces( );
