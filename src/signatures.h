@@ -5,6 +5,7 @@
 #include "util.h"
 
 #include <fstream>
+#include <set>
 
 class signatures {
 private:
@@ -55,11 +56,12 @@ private:
 
 		/* strip down to fn name */
 		size_t start_pos = name.substr( 0, char_pos ).find_last_of( " !#$%&\"()*+,-." );
-		if ( start_pos == std::string::npos ) start_pos = 0;
+		if ( start_pos != std::string::npos ) start_pos += 1;
 		size_t end_pos1 = name.substr( char_pos ).find_first_of( " !#$%&\"()*+,-." );
 		size_t end_pos2 = name.substr( char_pos + 2 ).find( ":" );
 		if ( end_pos2 != std::string::npos ) end_pos2 += 2;
 		size_t end_pos = min( end_pos1, end_pos2 );  // whichever one comes first
+		if ( start_pos == std::string::npos ) start_pos = 0;
 		if ( end_pos == std::string::npos ) end_pos = name.length( );
 		name = name.substr( start_pos, end_pos - start_pos + char_pos );
 

@@ -156,7 +156,7 @@ private:
 			{ "VMatrix ", 64 },
 			{ "VMatrix ", 64 },
 			{ "matrix3x4_t", 48 },
-			{ "float ", 4 },
+			{ "double ", 8 },
 			{ "int32_t ", 4 },  // might be size_t
 			{ "int32_t ", 4 },  // this too
 			{ "vec2_t ", 8 },
